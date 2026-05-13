@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>r8 — Contextual Reputation</title>
+  <meta name="description" content="A contextual reputation system that prioritizes fairness and experience over toxic scores.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="index.html" class="logo">r<span>8</span></a>
+      <nav>
+        <ul>
+          <li><a href="index.html">Explore</a></li>
+          <li><a href="moderation.html">Transparency</a></li>
+          <li><a href="profile.html" id="profileLink">Sign In</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Reputation in Context.</h1>
+        <p>Finally, a reputation system that values experience over toxicity. Explore entities, read verified reviews, and understand the context.</p>
+        
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Search people, places, or communities..." id="searchInput">
+        </div>
+      </section>
+
+      <section id="trending">
+        <h2 style="font-size: 24px; margin-bottom: 24px;">Trending Entities</h2>
+        <div class="grid" id="entityGrid">
+          <!-- Entities will be injected here -->
+          <div class="card">
+            <div class="card-category">Sports / Pickleball</div>
+            <h3 class="card-title">Langford Pickleball Club</h3>
+            <p class="card-desc">A vibrant community for pickleball enthusiasts of all skill levels.</p>
+            <div class="card-footer">
+              <div class="score">8.4<span>/10</span></div>
+              <div style="font-size: 12px; color: var(--text-muted);">124 reviews</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-category">Food / Restaurants</div>
+            <h3 class="card-title">The Silver Fork</h3>
+            <p class="card-desc">Modern fusion dining with a focus on local ingredients and atmosphere.</p>
+            <div class="card-footer">
+              <div class="score">9.1<span>/10</span></div>
+              <div style="font-size: 12px; color: var(--text-muted);">89 reviews</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-category">Tech / Communities</div>
+            <h3 class="card-title">Ermn Dev Discord</h3>
+            <p class="card-desc">The official hub for builders and creators in the Ermn ecosystem.</p>
+            <div class="card-footer">
+              <div class="score">7.8<span>/10</span></div>
+              <div style="font-size: 12px; color: var(--text-muted);">256 reviews</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 r8. All rights reserved.</p>
+      <div class="powered-by">
+        powered by <span>ermn.</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
