@@ -120,11 +120,14 @@
   <script src="app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(checkState, 700);
+      R8.onAuthChange(() => {
+        checkState();
+      });
     });
 
     function checkState() {
       const user = R8.getUser();
+      if (user === undefined) return; // Still loading session
       if (user) {
         showProfile(user);
       } else {

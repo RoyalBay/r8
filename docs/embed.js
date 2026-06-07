@@ -14,20 +14,21 @@
     ? new URL(document.currentScript.src).origin : '';
 
   const STYLE = `
-    .r8-widget{font-family:'Segoe UI',system-ui,sans-serif;background:#0f0f14;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;color:#f1f1f4;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    .r8-widget{font-family:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;background:#FAF8F5;border:1px solid #E3DCD0;border-radius:4px;padding:18px 20px;color:#1E2220;max-width:320px;box-shadow:2px 2px 0px #E3DCD0}
     .r8-widget *{box-sizing:border-box;margin:0;padding:0}
     .r8-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-    .r8-title{font-size:16px;font-weight:600;line-height:1.3}
-    .r8-cat{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#8b5cf6;margin-top:2px}
+    .r8-title{font-family:'Lora',Georgia,serif;font-size:16px;font-weight:600;line-height:1.3;color:#1E2220}
+    .r8-cat{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#2C4D3F;margin-top:2px}
     .r8-score{font-size:28px;font-weight:700;line-height:1}
-    .r8-score small{font-size:12px;color:#4b5563;font-weight:400}
-    .r8-meta{font-size:12px;color:#64748b;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+    .r8-score small{font-size:12px;color:#8E9893;font-weight:400}
+    .r8-meta{font-size:12px;color:#5E6963;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
     .r8-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
-    .r8-tag{font-size:10px;padding:3px 8px;border-radius:100px;background:rgba(255,255,255,.04);color:#94a3b8;border:1px solid rgba(255,255,255,.07)}
-    .r8-brand{font-size:10px;color:#4b5563;margin-top:10px;text-align:right}
-    .r8-brand a{color:#64748b;text-decoration:none}
-    .r8-brand a:hover{color:#8b5cf6}
-    .r8-err{color:#ef4444;font-size:13px}
+    .r8-tag{font-size:10px;padding:3px 8px;border-radius:2px;background:#F3EDE4;color:#5E6963;border:1px solid #E3DCD0}
+    .r8-brand{font-size:10px;color:#8E9893;margin-top:10px;text-align:right}
+    .r8-brand a{color:#5E6963;text-decoration:none}
+    .r8-brand a:hover{color:#2C4D3F}
+    .r8-err{color:#A33A3A;font-size:13px}
   `;
 
   function injectStyle() {

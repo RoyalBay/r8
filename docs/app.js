@@ -4,26 +4,38 @@
  */
 const R8 = (function () {
   let sb = null;
-  let currentUser = null;
+  let currentUser = undefined; // undefined = loading, null = guest, object = logged-in
+  let authListeners = [];
 
   function init() {
     if (!window.R8_URL || !window.R8_KEY) { console.error('r8: Missing config'); return; }
     sb = supabase.createClient(window.R8_URL, window.R8_KEY);
     _ensureToastContainer();
-    _checkSession();
-    _updateNavAuth();
-  }
 
-  // ── Auth ──
-  async function _checkSession() {
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (user) {
-        const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        currentUser = profile ? { ...user, profile } : user;
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        try {
+          const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+          currentUser = profile ? { ...session.user, profile } : session.user;
+        } catch (e) {
+          currentUser = session.user;
+        }
+      } else {
+        currentUser = null;
       }
       _updateNavAuth();
-    } catch (e) { console.warn('Session check failed', e); }
+      authListeners.forEach(cb => cb(currentUser));
+    });
+  }
+
+  function onAuthChange(callback) {
+    authListeners.push(callback);
+    if (currentUser !== undefined) {
+      callback(currentUser);
+    }
+    return () => {
+      authListeners = authListeners.filter(cb => cb !== callback);
+    };
   }
 
   function _updateNavAuth() {
@@ -256,7 +268,7 @@ const R8 = (function () {
     submitAppeal, getAppeals,
     getModActions, getCategories,
     subscribeReviews,
-    getUser, getClient, toast, timeAgo, scoreColor, icon
+    getUser, getClient, toast, timeAgo, scoreColor, icon, onAuthChange
   };
 })();
 

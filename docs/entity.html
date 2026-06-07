@@ -189,11 +189,11 @@
     }
 
     function checkAuth() {
-      setTimeout(() => {
-        const user = R8.getUser();
+      R8.onAuthChange((user) => {
+        if (user === undefined) return;
         document.getElementById('reviewForm').style.display = user ? 'block' : 'none';
         document.getElementById('signInPrompt').style.display = user ? 'none' : 'block';
-      }, 600);
+      });
     }
 
     async function submitReview() {
