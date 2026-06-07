@@ -4,79 +4,187 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>r8 — Contextual Reputation</title>
-  <meta name="description" content="A contextual reputation system that prioritizes fairness and experience over toxic scores.">
+  <meta name="description" content="A reputation system built on context, fairness, and accountability. Rate experiences, not people.">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between">
       <a href="index.html" class="logo">r<span>8</span></a>
-      <nav>
-        <ul>
-          <li><a href="index.html">Explore</a></li>
-          <li><a href="moderation.html">Transparency</a></li>
-          <li><a href="profile.html" id="profileLink">Sign In</a></li>
-        </ul>
-      </nav>
-    </header>
-
-    <main>
-      <section class="hero">
-        <h1>Reputation in Context.</h1>
-        <p>Finally, a reputation system that values experience over toxicity. Explore entities, read verified reviews, and understand the context.</p>
-        
-        <div class="search-container">
-          <input type="text" class="search-input" placeholder="Search people, places, or communities..." id="searchInput">
-        </div>
-      </section>
-
-      <section id="trending">
-        <h2 style="font-size: 24px; margin-bottom: 24px;">Trending Entities</h2>
-        <div class="grid" id="entityGrid">
-          <!-- Entities will be injected here -->
-          <div class="card">
-            <div class="card-category">Sports / Pickleball</div>
-            <h3 class="card-title">Langford Pickleball Club</h3>
-            <p class="card-desc">A vibrant community for pickleball enthusiasts of all skill levels.</p>
-            <div class="card-footer">
-              <div class="score">8.4<span>/10</span></div>
-              <div style="font-size: 12px; color: var(--text-muted);">124 reviews</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-category">Food / Restaurants</div>
-            <h3 class="card-title">The Silver Fork</h3>
-            <p class="card-desc">Modern fusion dining with a focus on local ingredients and atmosphere.</p>
-            <div class="card-footer">
-              <div class="score">9.1<span>/10</span></div>
-              <div style="font-size: 12px; color: var(--text-muted);">89 reviews</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-category">Tech / Communities</div>
-            <h3 class="card-title">Ermn Dev Discord</h3>
-            <p class="card-desc">The official hub for builders and creators in the Ermn ecosystem.</p>
-            <div class="card-footer">
-              <div class="score">7.8<span>/10</span></div>
-              <div style="font-size: 12px; color: var(--text-muted);">256 reviews</div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <p>&copy; 2026 r8. All rights reserved.</p>
-      <div class="powered-by">
-        powered by <span>ermn.</span>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Explore</a></li>
+        <li><a href="moderation.html">Transparency</a></li>
+      </ul>
+      <div class="nav-auth" id="navAuth">
+        <a href="profile.html" class="btn btn-primary btn-sm">Sign In</a>
       </div>
-    </footer>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Reputation in Context.</h1>
+      <p>Rate experiences, not people. A system built on fairness, accountability, and transparency.</p>
+      <div class="search-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="search-input" placeholder="Search entities..." id="searchInput" autocomplete="off">
+      </div>
+      <div class="chip-row" id="chipRow">
+        <button class="chip active" data-cat="All">All</button>
+      </div>
+    </section>
+
+    <!-- Entity Grid -->
+    <section>
+      <h2 class="section-title" id="gridTitle">Trending Entities</h2>
+      <div class="grid" id="entityGrid"></div>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+        <p>No entities found. Be the first to create one!</p>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="openCreateModal()">+ Create Entity</button>
+      </div>
+    </section>
+
+    <!-- Create Entity Button (floating) -->
+    <button class="btn btn-primary" id="createBtn" style="position:fixed;bottom:28px;right:28px;border-radius:50%;width:56px;height:56px;font-size:24px;box-shadow:0 6px 24px var(--accent-glow);z-index:100" onclick="openCreateModal()" title="Create Entity">+</button>
+
+    <!-- Create Entity Modal -->
+    <div class="modal-backdrop" id="createModal">
+      <div class="modal" style="position:relative">
+        <button class="modal-close" onclick="closeCreateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <h3 class="modal-title">Create New Entity</h3>
+        <div class="form-group">
+          <label>Title</label>
+          <input class="form-input" id="newTitle" placeholder="e.g. Langford Pickleball Club">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select class="form-select" id="newCategory">
+            <option>General</option>
+            <option>Sports / Recreation</option>
+            <option>Food / Restaurants</option>
+            <option>Tech / Communities</option>
+            <option>Events</option>
+            <option>Creators</option>
+            <option>Outdoors / Trails</option>
+            <option>Services</option>
+            <option>People</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-textarea" id="newDesc" placeholder="What is this entity about?"></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitEntity()">Create Entity</button>
+      </div>
+    </div>
   </div>
 
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 r8 &middot; Contextual Reputation</p>
+      <div class="powered-by">powered by <span class="ermn">ermn.</span></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script>
+    const grid = document.getElementById('entityGrid');
+    const empty = document.getElementById('emptyState');
+    const chipRow = document.getElementById('chipRow');
+    let activeCategory = 'All';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadCategories();
+      await loadEntities();
+    });
+
+    async function loadCategories() {
+      try {
+        const cats = await R8.getCategories();
+        const existing = ['All'];
+        cats.forEach(c => { if (!existing.includes(c)) existing.push(c); });
+        chipRow.innerHTML = existing.map(c =>
+          `<button class="chip ${c === activeCategory ? 'active' : ''}" data-cat="${c}" onclick="filterCategory('${c}')">${c}</button>`
+        ).join('');
+      } catch (e) { /* keep default */ }
+    }
+
+    async function loadEntities(search) {
+      grid.innerHTML = Array(3).fill('<div class="card" style="height:200px"><div class="skeleton" style="height:100%;border-radius:12px"></div></div>').join('');
+      try {
+        const entities = await R8.getEntities({ search, category: activeCategory === 'All' ? null : activeCategory });
+        renderEntities(entities);
+      } catch (e) {
+        console.error(e);
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+      }
+    }
+
+    function renderEntities(entities) {
+      if (!entities.length) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      grid.innerHTML = entities.map(e => `
+        <div class="card" onclick="location.href='entity.html?id=${e.id}'">
+          <div class="card-cat">${esc(e.category)}</div>
+          <h3 class="card-title">${esc(e.title)}</h3>
+          <p class="card-desc">${esc(e.description || '')}</p>
+          <div class="card-footer">
+            <div class="card-score" style="color:${R8.scoreColor(e.avg_score)}">${e.avg_score}<small>/10</small></div>
+            <div class="card-reviews">${e.review_count} review${e.review_count !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterCategory(cat) {
+      activeCategory = cat;
+      chipRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+      document.getElementById('gridTitle').textContent = cat === 'All' ? 'Trending Entities' : cat;
+      loadEntities(document.getElementById('searchInput').value.trim());
+    }
+
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', e => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => loadEntities(e.target.value.trim()), 350);
+    });
+
+    function openCreateModal() {
+      if (!R8.getUser()) { R8.toast('Sign in to create an entity.', 'error'); location.href = 'profile.html'; return; }
+      document.getElementById('createModal').classList.add('open');
+    }
+    function closeCreateModal() { document.getElementById('createModal').classList.remove('open'); }
+
+    async function submitEntity() {
+      const title = document.getElementById('newTitle').value.trim();
+      const category = document.getElementById('newCategory').value;
+      const desc = document.getElementById('newDesc').value.trim();
+      if (!title) { R8.toast('Title is required.', 'error'); return; }
+      try {
+        const entity = await R8.createEntity(title, category, desc);
+        closeCreateModal();
+        location.href = `entity.html?id=${entity.id}`;
+      } catch (e) { R8.toast(e.message, 'error'); }
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  </script>
 </body>
 </html>

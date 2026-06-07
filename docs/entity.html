@@ -4,26 +4,239 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entity — r8</title>
+  <meta name="description" content="View reputation, reviews, and context for this entity on r8.">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
+
+  <header class="site-header">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between">
       <a href="index.html" class="logo">r<span>8</span></a>
-      <nav>
-        <ul>
-          <li><a href="index.html">Explore</a></li>
-          <li><a href="moderation.html">Transparency</a></li>
-          <li><a href="profile.html">Profile</a></li>
-        </ul>
-      </nav>
-    </header>
-    <main style="padding: 100px 0; text-align: center;">
-      <h1>Entity Page</h1>
-      <p style="color: var(--text-dim);">Coming soon. This page will show detailed reputation metrics and recent reviews.</p>
-      <a href="index.html" class="btn btn-primary" style="display: inline-block; margin-top: 24px; text-decoration: none;">Go Back</a>
-    </main>
+      <ul class="nav-links">
+        <li><a href="index.html">Explore</a></li>
+        <li><a href="moderation.html">Transparency</a></li>
+      </ul>
+      <div class="nav-auth" id="navAuth">
+        <a href="profile.html" class="btn btn-primary btn-sm">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Entity Header -->
+    <div class="entity-header" id="entityHeader">
+      <div class="skeleton" style="width:120px;height:16px;margin-bottom:12px"></div>
+      <div class="skeleton" style="width:300px;height:36px;margin-bottom:12px"></div>
+      <div class="skeleton" style="width:500px;height:18px"></div>
+    </div>
+
+    <!-- Tags -->
+    <div class="card-tags" id="entityTags" style="margin-bottom:30px"></div>
+
+    <!-- Two Column: Reviews + Write -->
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start" id="mainGrid">
+
+      <!-- Review Feed -->
+      <section>
+        <h2 class="section-title">Reviews</h2>
+        <div id="reviewFeed"></div>
+        <div class="empty-state" id="reviewEmpty" style="display:none">
+          <div class="icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <p>No reviews yet. Be the first to share your experience!</p>
+        </div>
+      </section>
+
+      <!-- Write Review Sidebar -->
+      <aside style="position:sticky;top:100px">
+        <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px">
+          <h3 style="font-size:17px;font-weight:600;margin-bottom:20px">Write a Review</h3>
+          <div id="reviewForm">
+            <div class="form-group">
+              <label>Your Score</label>
+              <div class="score-slider">
+                <input type="range" min="1" max="10" value="7" id="reviewScore" oninput="document.getElementById('scoreShow').textContent=this.value">
+                <div class="score-display" id="scoreShow">7</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Interaction Type</label>
+              <select class="form-select" id="reviewInteraction">
+                <option value="general">General Experience</option>
+                <option value="visited">Visited / Attended</option>
+                <option value="member">Member / Participant</option>
+                <option value="customer">Customer</option>
+                <option value="collaborated">Collaborated</option>
+                <option value="competed">Competed Against</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tags <span style="color:var(--text-muted);font-weight:400">(comma-separated)</span></label>
+              <input class="form-input" id="reviewTags" placeholder="e.g. friendly, competitive, welcoming">
+            </div>
+            <div class="form-group">
+              <label>Your Experience</label>
+              <textarea class="form-textarea" id="reviewContent" placeholder="Describe your experience in context..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="submitReview()">Submit Review</button>
+          </div>
+          <div id="signInPrompt" style="display:none;text-align:center;padding:20px 0">
+            <p style="color:var(--text-dim);margin-bottom:14px;font-size:14px">Sign in to write a review.</p>
+            <a href="profile.html" class="btn btn-primary btn-sm">Sign In</a>
+          </div>
+        </div>
+      </aside>
+    </div>
   </div>
+
+  <!-- Appeal Modal -->
+  <div class="modal-backdrop" id="appealModal">
+    <div class="modal" style="position:relative">
+      <button class="modal-close" onclick="closeAppeal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <h3 class="modal-title">Appeal This Review</h3>
+      <p style="font-size:14px;color:var(--text-dim);margin-bottom:20px">If you believe this review is unfair, misleading, or violates our guidelines, you can submit an appeal for moderator review.</p>
+      <input type="hidden" id="appealReviewId">
+      <div class="form-group">
+        <label>Reason for Appeal</label>
+        <textarea class="form-textarea" id="appealReason" placeholder="Explain why this review should be reviewed by moderators..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Evidence URL <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <input class="form-input" id="appealEvidence" placeholder="Link to screenshot or other evidence">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="submitAppealForm()">Submit Appeal</button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 r8</p>
+      <div class="powered-by">powered by <span class="ermn">ermn.</span></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const entityId = params.get('id');
+    if (!entityId) location.href = 'index.html';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadEntity();
+      await loadReviews();
+      checkAuth();
+      // Realtime
+      R8.subscribeReviews(entityId, () => loadReviews());
+    });
+
+    async function loadEntity() {
+      try {
+        const e = await R8.getEntity(entityId);
+        document.title = `${e.title} — r8`;
+        document.getElementById('entityHeader').innerHTML = `
+          <div class="card-cat">${esc(e.category)}</div>
+          <h1>${esc(e.title)}</h1>
+          <p>${esc(e.description || '')}</p>
+          <div class="entity-score-row">
+            <div class="entity-big-score" style="color:${R8.scoreColor(e.avg_score)}">${e.avg_score}<small>/10</small></div>
+            <div style="color:var(--text-muted);font-size:14px">${e.review_count} review${e.review_count !== 1 ? 's' : ''}</div>
+          </div>
+        `;
+        const tags = await R8.getEntityTags(entityId);
+        document.getElementById('entityTags').innerHTML = tags.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+      } catch (e) {
+        document.getElementById('entityHeader').innerHTML = '<h1>Entity not found</h1><p style="color:var(--text-dim)">This entity may have been removed.</p>';
+      }
+    }
+
+    async function loadReviews() {
+      const feed = document.getElementById('reviewFeed');
+      try {
+        const reviews = await R8.getReviews(entityId);
+        if (!reviews.length) {
+          feed.innerHTML = '';
+          document.getElementById('reviewEmpty').style.display = 'block';
+          return;
+        }
+        document.getElementById('reviewEmpty').style.display = 'none';
+        feed.innerHTML = reviews.map(r => `
+          <div class="review">
+            <div class="review-header">
+              <div class="review-author">
+                <div class="review-avatar">${(r.profiles?.username || '?')[0].toUpperCase()}</div>
+                <div class="review-meta">
+                  <strong>${esc(r.profiles?.username || 'Anonymous')}</strong>
+                  <div style="font-size:12px;color:var(--text-muted)">${R8.timeAgo(r.created_at)}${r.profiles?.trust_score ? ' · Trust: ' + Math.round(r.profiles.trust_score) : ''}</div>
+                </div>
+              </div>
+              <div class="review-score" style="color:${R8.scoreColor(r.score)}">${r.score}<small style="color:var(--text-muted);font-size:12px">/10</small></div>
+            </div>
+            <div class="review-interaction">${esc(r.interaction_type)}</div>
+            ${r.review_tags?.length ? '<div class="card-tags" style="margin:8px 0">' + r.review_tags.map(t => `<span class="tag">${esc(t.tag)}</span>`).join('') + '</div>' : ''}
+            <div class="review-body">${esc(r.content)}</div>
+            <div class="review-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openAppeal('${r.id}')" style="display:inline-flex;align-items:center;gap:6px">${R8.icon('scale', 14)} Appeal</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    function checkAuth() {
+      setTimeout(() => {
+        const user = R8.getUser();
+        document.getElementById('reviewForm').style.display = user ? 'block' : 'none';
+        document.getElementById('signInPrompt').style.display = user ? 'none' : 'block';
+      }, 600);
+    }
+
+    async function submitReview() {
+      const score = parseInt(document.getElementById('reviewScore').value);
+      const content = document.getElementById('reviewContent').value.trim();
+      const interaction = document.getElementById('reviewInteraction').value;
+      const tags = document.getElementById('reviewTags').value.split(',').map(t => t.trim()).filter(Boolean);
+      if (!content) { R8.toast('Please describe your experience.', 'error'); return; }
+      try {
+        await R8.createReview(entityId, score, content, interaction, tags);
+        document.getElementById('reviewContent').value = '';
+        document.getElementById('reviewTags').value = '';
+        await loadReviews();
+        await loadEntity();
+      } catch (e) { R8.toast(e.message, 'error'); }
+    }
+
+    function openAppeal(reviewId) {
+      if (!R8.getUser()) { R8.toast('Sign in to appeal.', 'error'); return; }
+      document.getElementById('appealReviewId').value = reviewId;
+      document.getElementById('appealModal').classList.add('open');
+    }
+    function closeAppeal() { document.getElementById('appealModal').classList.remove('open'); }
+
+    async function submitAppealForm() {
+      const reviewId = document.getElementById('appealReviewId').value;
+      const reason = document.getElementById('appealReason').value.trim();
+      const evidence = document.getElementById('appealEvidence').value.trim();
+      if (!reason) { R8.toast('Provide a reason.', 'error'); return; }
+      try {
+        await R8.submitAppeal(reviewId, reason, evidence);
+        closeAppeal();
+      } catch (e) { R8.toast(e.message, 'error'); }
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  </script>
+
+  <style>
+    @media(max-width:900px) {
+      #mainGrid { grid-template-columns:1fr !important; }
+      aside { position:static !important; }
+    }
+  </style>
 </body>
 </html>

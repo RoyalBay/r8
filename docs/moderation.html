@@ -4,31 +4,173 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Transparency — r8</title>
+  <meta name="description" content="Public audit log — every moderation action on r8 is transparent and accountable.">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
+
+  <header class="site-header">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between">
       <a href="index.html" class="logo">r<span>8</span></a>
-      <nav>
-        <ul>
-          <li><a href="index.html">Explore</a></li>
-          <li><a href="moderation.html">Transparency</a></li>
-          <li><a href="profile.html">Profile</a></li>
-        </ul>
-      </nav>
-    </header>
-    <main style="padding: 100px 0; text-align: center;">
-      <h1>Moderation & Appeals</h1>
-      <p style="color: var(--text-dim);">Public audit logs of all moderation actions to ensure fairness.</p>
-      <div style="margin-top: 60px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
-        <h2 style="font-size: 20px; margin-bottom: 24px;">Public Audit Log</h2>
-        <div style="background: var(--surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; color: var(--text-muted); font-style: italic;">
-          No recent moderation actions recorded.
-        </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Explore</a></li>
+        <li><a href="moderation.html" class="active">Transparency</a></li>
+      </ul>
+      <div class="nav-auth" id="navAuth">
+        <a href="profile.html" class="btn btn-primary btn-sm">Sign In</a>
       </div>
-    </main>
+    </div>
+  </header>
+
+  <div class="container" style="padding-top:50px">
+
+    <div style="text-align:center;margin-bottom:50px">
+      <h1 style="font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:10px">Transparency</h1>
+      <p style="color:var(--text-dim);font-size:16px;max-width:560px;margin:0 auto">Every moderation action on r8 is publicly logged. We believe accountability is the foundation of trust.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="modStats">
+      <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Actions</div></div>
+      <div class="stat-card"><div class="stat-value" id="statAppeals">—</div><div class="stat-label">Appeals Filed</div></div>
+      <div class="stat-card"><div class="stat-value" id="statApproved">—</div><div class="stat-label">Appeals Approved</div></div>
+    </div>
+
+    <!-- Filter -->
+    <div class="chip-row" style="justify-content:flex-start;margin-bottom:24px">
+      <button class="chip active" data-filter="all" onclick="filterLog('all',this)">All Actions</button>
+      <button class="chip" data-filter="review_removed" onclick="filterLog('review_removed',this)">Removals</button>
+      <button class="chip" data-filter="appeal_approved" onclick="filterLog('appeal_approved',this)">Approved</button>
+      <button class="chip" data-filter="appeal_rejected" onclick="filterLog('appeal_rejected',this)">Rejected</button>
+    </div>
+
+    <!-- Audit Log -->
+    <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden" id="auditLog">
+      <div class="empty-state" id="logEmpty">
+        <div class="icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+        </div>
+        <p>No moderation actions recorded yet. This is a good thing!</p>
+      </div>
+    </div>
+
+    <!-- Appeals Section -->
+    <div style="margin-top:60px">
+      <h2 class="section-title">Recent Appeals</h2>
+      <div id="appealsList"></div>
+      <div class="empty-state" id="appealsEmpty" style="display:none">
+        <div class="icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+        </div>
+        <p>No appeals have been filed yet.</p>
+      </div>
+    </div>
   </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 r8</p>
+      <div class="powered-by">powered by <span class="ermn">ermn.</span></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let allActions = [];
+
+    const actionIcons = {
+      review_removed: { icon: 'trash', cls: 'remove', label: 'Review Removed' },
+      review_hidden: { icon: 'eye-off', cls: 'remove', label: 'Review Hidden' },
+      reviewer_suspended: { icon: 'ban', cls: 'remove', label: 'Reviewer Suspended' },
+      appeal_approved: { icon: 'check-circle', cls: 'approve', label: 'Appeal Approved' },
+      appeal_rejected: { icon: 'x-circle', cls: 'reject', label: 'Appeal Rejected' },
+      entity_edited: { icon: 'edit', cls: 'approve', label: 'Entity Edited' }
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadModActions();
+      await loadAppeals();
+    });
+
+    async function loadModActions() {
+      try {
+        allActions = await R8.getModActions();
+        renderLog(allActions);
+        document.getElementById('statTotal').textContent = allActions.length;
+      } catch (e) { console.error(e); }
+    }
+
+    function renderLog(actions) {
+      const log = document.getElementById('auditLog');
+      const empty = document.getElementById('logEmpty');
+      if (!actions.length) {
+        log.innerHTML = '';
+        log.appendChild(empty);
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      log.innerHTML = actions.map(a => {
+        const info = actionIcons[a.action_type] || { icon: 'pin', cls: 'approve', label: a.action_type };
+        return `
+          <div class="audit-item">
+            <div class="audit-icon ${info.cls}" style="display:flex;align-items:center;justify-content:center">${R8.icon(info.icon, 18)}</div>
+            <div class="audit-body">
+              <strong>${info.label}</strong> by ${esc(a.profiles?.username || 'System')}
+              <p>${esc(a.reason)}</p>
+            </div>
+            <div class="audit-time">${R8.timeAgo(a.created_at)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterLog(type, el) {
+      document.querySelectorAll('.chip-row .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      if (type === 'all') renderLog(allActions);
+      else renderLog(allActions.filter(a => a.action_type === type));
+    }
+
+    async function loadAppeals() {
+      try {
+        const appeals = await R8.getAppeals();
+        const list = document.getElementById('appealsList');
+        const empty = document.getElementById('appealsEmpty');
+
+        const approved = appeals.filter(a => a.status === 'approved').length;
+        document.getElementById('statAppeals').textContent = appeals.length;
+        document.getElementById('statApproved').textContent = approved;
+
+        if (!appeals.length) {
+          list.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+        list.innerHTML = appeals.map(a => {
+          const statusColor = a.status === 'approved' ? 'var(--green)' : a.status === 'rejected' ? 'var(--red)' : 'var(--amber)';
+          return `
+            <div class="review" style="margin-bottom:12px">
+              <div class="review-header">
+                <div class="review-meta">
+                  <strong>${esc(a.profiles?.username || 'Anonymous')}</strong> filed an appeal
+                  <div style="font-size:12px;color:var(--text-muted)">${R8.timeAgo(a.created_at)}</div>
+                </div>
+                <span class="tag" style="color:${statusColor};border-color:${statusColor}">${a.status.toUpperCase()}</span>
+              </div>
+              <div class="review-body">${esc(a.reason)}</div>
+              ${a.evidence_url ? `<a href="${esc(a.evidence_url)}" target="_blank" style="font-size:13px">View Evidence →</a>` : ''}
+              ${a.moderator_note ? `<div style="margin-top:8px;padding:10px;background:var(--glass);border-radius:8px;font-size:13px;color:var(--text-dim)"><strong>Moderator:</strong> ${esc(a.moderator_note)}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  </script>
 </body>
 </html>
