@@ -896,6 +896,7 @@ a:hover {
   color:var(--text-dim);
 }
 .powered-by .ermn {
+  font-family: Tahoma, Verdana, sans-serif;
   color:#3b5998;
   font-weight:700;
   font-style:italic;

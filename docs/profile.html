@@ -6,6 +6,7 @@
   <title>Profile — r8</title>
   <meta name="description" content="Your r8 profile — manage your reviews, reputation, and account.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232C4D3F'/><text x='50' y='65' font-family='Georgia, serif' font-size='50' font-weight='bold' fill='white' text-anchor='middle'>8</text></svg>">
 </head>
 <body>
 
@@ -33,13 +34,14 @@
         <div class="auth-tabs">
           <div class="auth-tab active" id="tabSignIn" onclick="switchTab('signin')">Sign In</div>
           <div class="auth-tab" id="tabSignUp" onclick="switchTab('signup')">Sign Up</div>
+          <div class="auth-tab" id="tabErmn" onclick="switchTab('ermn')">Ermn Sign In</div>
         </div>
 
         <!-- Sign In -->
         <div id="signinForm">
           <div class="form-group">
-            <label>Email</label>
-            <input class="form-input" type="email" id="siEmail" placeholder="you@example.com">
+            <label>Username or Email</label>
+            <input class="form-input" type="text" id="siEmail" placeholder="Username or email">
           </div>
           <div class="form-group">
             <label>Password</label>
@@ -55,14 +57,23 @@
             <input class="form-input" id="suUsername" placeholder="Pick a username">
           </div>
           <div class="form-group">
-            <label>Email</label>
-            <input class="form-input" type="email" id="suEmail" placeholder="you@example.com">
-          </div>
-          <div class="form-group">
             <label>Password</label>
             <input class="form-input" type="password" id="suPassword" placeholder="At least 6 characters">
           </div>
           <button class="btn btn-primary" style="width:100%" onclick="doSignUp()" id="suBtn">Create Account</button>
+        </div>
+
+        <!-- Ermn Sign In -->
+        <div id="ermnForm" style="display:none">
+          <div class="form-group">
+            <label>Ermn Username</label>
+            <input class="form-input" id="ermnUsername" placeholder="Your ermn username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input class="form-input" type="password" id="ermnPassword" placeholder="Your ermn password">
+          </div>
+          <button class="btn btn-primary" style="width:100%;background:#3b5998;border-color:#3b5998" onclick="doErmnSignIn()" id="ermnBtn">Sign In with Ermn</button>
         </div>
       </div>
     </div>
@@ -98,6 +109,10 @@
       <div id="settingsSection" style="display:none">
         <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;max-width:500px">
           <h3 style="font-size:17px;margin-bottom:20px">Edit Profile</h3>
+          <div class="form-group">
+            <label>Avatar URL</label>
+            <input class="form-input" id="editAvatarUrl" placeholder="Link to your avatar image...">
+          </div>
           <div class="form-group">
             <label>Bio</label>
             <textarea class="form-textarea" id="editBio" placeholder="Tell us about yourself..."></textarea>
@@ -139,14 +154,19 @@
     function switchTab(tab) {
       document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
       document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
+      document.getElementById('tabErmn').classList.toggle('active', tab === 'ermn');
       document.getElementById('signinForm').style.display = tab === 'signin' ? 'block' : 'none';
       document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+      document.getElementById('ermnForm').style.display = tab === 'ermn' ? 'block' : 'none';
     }
 
     async function doSignIn() {
-      const email = document.getElementById('siEmail').value.trim();
+      const input = document.getElementById('siEmail').value.trim();
       const pw = document.getElementById('siPassword').value;
-      if (!email || !pw) { R8.toast('Fill in all fields.', 'error'); return; }
+      if (!input || !pw) { R8.toast('Fill in all fields.', 'error'); return; }
+      
+      const email = input.includes('@') ? input : (input.toLowerCase() + '@r8.social');
+      
       document.getElementById('siBtn').disabled = true;
       try {
         await R8.signIn(email, pw);
@@ -157,11 +177,13 @@
 
     async function doSignUp() {
       const username = document.getElementById('suUsername').value.trim();
-      const email = document.getElementById('suEmail').value.trim();
       const pw = document.getElementById('suPassword').value;
-      if (!username || !email || !pw) { R8.toast('Fill in all fields.', 'error'); return; }
+      if (!username || !pw) { R8.toast('Fill in all fields.', 'error'); return; }
       if (username.length < 3) { R8.toast('Username must be at least 3 characters.', 'error'); return; }
       if (pw.length < 6) { R8.toast('Password must be at least 6 characters.', 'error'); return; }
+      
+      const email = username.toLowerCase() + '@r8.social';
+      
       document.getElementById('suBtn').disabled = true;
       try {
         await R8.signUp(username, email, pw);
@@ -170,14 +192,31 @@
       document.getElementById('suBtn').disabled = false;
     }
 
+    async function doErmnSignIn() {
+      const username = document.getElementById('ermnUsername').value.trim();
+      const pw = document.getElementById('ermnPassword').value;
+      if (!username || !pw) { R8.toast('Fill in all fields.', 'error'); return; }
+      
+      document.getElementById('ermnBtn').disabled = true;
+      try {
+        await R8.signInWithErmn(username, pw);
+        setTimeout(checkState, 500);
+      } catch (e) { R8.toast(e.message, 'error'); }
+      document.getElementById('ermnBtn').disabled = false;
+    }
+
     async function showProfile(user) {
       document.getElementById('authView').style.display = 'none';
       document.getElementById('profileView').style.display = 'block';
       const p = user.profile || {};
       const joinDate = new Date(p.created_at || user.created_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
+      const avatarHtml = p.avatar_url 
+        ? `<img src="${esc(p.avatar_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+        : (p.username || '?')[0].toUpperCase();
+
       document.getElementById('profileHeader').innerHTML = `
-        <div class="profile-avatar">${(p.username || '?')[0].toUpperCase()}</div>
+        <div class="profile-avatar">${avatarHtml}</div>
         <div class="profile-info">
           <h2>${esc(p.username || 'User')}</h2>
           <div class="trust">Trust Score: ${Math.round(p.trust_score || 50)}</div>
@@ -186,6 +225,7 @@
         </div>
       `;
       document.getElementById('editBio').value = p.bio || '';
+      document.getElementById('editAvatarUrl').value = p.avatar_url || '';
       loadMyReviews(user);
     }
 
@@ -231,12 +271,18 @@
 
     async function saveBio() {
       const bio = document.getElementById('editBio').value.trim();
+      const avatarUrl = document.getElementById('editAvatarUrl').value.trim();
       const user = R8.getUser();
       if (!user) return;
       try {
-        const { error } = await R8.getClient().from('profiles').update({ bio }).eq('id', user.id);
+        const { error } = await R8.getClient().from('profiles').update({ bio, avatar_url: avatarUrl }).eq('id', user.id);
         if (error) throw error;
         R8.toast('Profile updated!', 'success');
+        if (user.profile) {
+          user.profile.bio = bio;
+          user.profile.avatar_url = avatarUrl;
+        }
+        showProfile(user);
       } catch (e) { R8.toast(e.message, 'error'); }
     }
 

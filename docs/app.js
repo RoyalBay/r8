@@ -57,7 +57,6 @@ const R8 = (function () {
     });
     if (error) throw error;
     if (data.user && data.session) {
-      await _checkSession();
       toast('Account created!', 'success');
       return data;
     }
@@ -68,9 +67,59 @@ const R8 = (function () {
   async function signIn(email, password) {
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    await _checkSession();
     toast('Signed in!', 'success');
     return data;
+  }
+
+  async function signInWithErmn(username, password) {
+    const ermnUrl = "https://glxkfdltajezuvptippt.supabase.co";
+    const ermnKey = "sb_publishable_TcAcjr-U6SKDZf4gfNq9zg_CM3zXq1B";
+    const sbErmn = supabase.createClient(ermnUrl, ermnKey);
+
+    const ermnEmail = username.toLowerCase() + "@ermn.social";
+    const { data: ermnData, error: ermnError } = await sbErmn.auth.signInWithPassword({
+      email: ermnEmail,
+      password: password
+    });
+    if (ermnError) throw new Error("Ermn auth failed: " + ermnError.message);
+
+    const ermnUser = ermnData.user;
+    if (!ermnUser) throw new Error("Could not retrieve Ermn user data");
+
+    const r8Email = username.toLowerCase() + "@r8.social";
+    const r8Password = "ErmnPass_" + ermnUser.id;
+
+    try {
+      const { data: r8Data, error: r8SignInError } = await sb.auth.signInWithPassword({
+        email: r8Email,
+        password: r8Password
+      });
+      if (r8SignInError) {
+        if (r8SignInError.message.includes("Invalid login credentials") || r8SignInError.status === 400) {
+          const { data: signUpData, error: r8SignUpError } = await sb.auth.signUp({
+            email: r8Email,
+            password: r8Password,
+            options: { data: { username: username } }
+          });
+          if (r8SignUpError) throw r8SignUpError;
+          if (signUpData.user && signUpData.session) {
+            toast("Ermn account linked and registered!", "success");
+            return signUpData;
+          } else {
+            const retryRes = await sb.auth.signInWithPassword({ email: r8Email, password: r8Password });
+            if (retryRes.error) throw retryRes.error;
+            toast("Ermn account linked!", "success");
+            return retryRes.data;
+          }
+        } else {
+          throw r8SignInError;
+        }
+      }
+      toast("Signed in with Ermn account!", "success");
+      return r8Data;
+    } catch (e) {
+      throw new Error("r8 linking failed: " + e.message);
+    }
   }
 
   async function signOut() {
@@ -262,7 +311,7 @@ const R8 = (function () {
   }
 
   return {
-    init, signUp, signIn, signOut,
+    init, signUp, signIn, signInWithErmn, signOut,
     getEntities, getEntity, createEntity, getEntityTags,
     getReviews, getUserReviews, createReview,
     submitAppeal, getAppeals,
